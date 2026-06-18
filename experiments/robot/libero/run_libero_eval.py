@@ -17,20 +17,20 @@ from typing import Optional, Union
 import draccus
 import numpy as np
 import tqdm
-from libero.libero import benchmark
+# from libero.libero import benchmark
 
 import wandb
 
 # Append current directory so that interpreter can find experiments.robot
 sys.path.append("../..")
-from experiments.robot.libero.libero_utils import (
-    get_libero_dummy_action,
-    get_libero_env,
-    get_libero_image,
-    get_libero_wrist_image,
-    quat2axisangle,
-    save_rollout_video,
-)
+# from experiments.robot.libero.libero_utils import (
+#     get_libero_dummy_action,
+#     get_libero_env,
+#     get_libero_image,
+#     get_libero_wrist_image,
+#     quat2axisangle,
+#     save_rollout_video,
+# )
 from experiments.robot.openvla_utils import (
     get_action_head,
     get_noisy_action_projector,

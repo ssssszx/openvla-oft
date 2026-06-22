@@ -9,7 +9,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-import json_numpy
+# import json_numpy
 import numpy as np
 import requests
 import tensorflow as tf
@@ -19,7 +19,7 @@ from PIL import Image
 from transformers import AutoConfig, AutoImageProcessor, AutoModelForVision2Seq, AutoProcessor, BitsAndBytesConfig
 
 # Apply JSON numpy patch for serialization
-json_numpy.patch()
+# json_numpy.patch()
 
 from prismatic.extern.hf.configuration_prismatic import OpenVLAConfig
 from prismatic.extern.hf.modeling_prismatic import OpenVLAForActionPrediction

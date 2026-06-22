@@ -16,7 +16,7 @@ import tensorflow as tf
 import torch
 from huggingface_hub import HfApi, hf_hub_download
 from PIL import Image
-from transformers import AutoConfig, AutoImageProcessor, AutoModelForVision2Seq, AutoProcessor
+from transformers import AutoConfig, AutoImageProcessor, AutoModelForVision2Seq, AutoProcessor, BitsAndBytesConfig
 
 # Apply JSON numpy patch for serialization
 json_numpy.patch()
@@ -267,27 +267,61 @@ def get_vla(cfg: Any) -> torch.nn.Module:
     # actually go into effect
     # If loading a pretrained checkpoint from Hugging Face Hub, we just assume that the policy
     # will be used as is, with its original modeling logic
-    if not model_is_on_hf_hub(cfg.pretrained_checkpoint):
-        # Register OpenVLA model to HF Auto Classes (not needed if the model is on HF Hub)
+    # if not model_is_on_hf_hub(cfg.pretrained_checkpoint):
+    #     # Register OpenVLA model to HF Auto Classes (not needed if the model is on HF Hub)
+    #     AutoConfig.register("openvla", OpenVLAConfig)
+    #     AutoImageProcessor.register(OpenVLAConfig, PrismaticImageProcessor)
+    #     AutoProcessor.register(OpenVLAConfig, PrismaticProcessor)
+    #     AutoModelForVision2Seq.register(OpenVLAConfig, OpenVLAForActionPrediction)
+
+        # Update config.json and sync model files
+        # update_auto_map(cfg.pretrained_checkpoint)
+        # check_model_logic_mismatch(cfg.pretrained_checkpoint)
+
+    if cfg.pretrained_checkpoint:
         AutoConfig.register("openvla", OpenVLAConfig)
         AutoImageProcessor.register(OpenVLAConfig, PrismaticImageProcessor)
         AutoProcessor.register(OpenVLAConfig, PrismaticProcessor)
-        AutoModelForVision2Seq.register(OpenVLAConfig, OpenVLAForActionPrediction)
+        AutoModelForVision2Seq.register(OpenVLAConfig, OpenVLAForActionPrediction)        
 
-        # Update config.json and sync model files
-        update_auto_map(cfg.pretrained_checkpoint)
-        check_model_logic_mismatch(cfg.pretrained_checkpoint)
+    quantization_config = None
 
-    # Load the model
+    if cfg.load_in_4bit:
+        quantization_config = BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_quant_type="nf4",
+            bnb_4bit_compute_dtype=torch.bfloat16,
+            bnb_4bit_use_double_quant=True,
+        )
+    elif cfg.load_in_8bit:
+        quantization_config = BitsAndBytesConfig(
+            load_in_8bit=True,
+        )
+
+    # print("load_in_4bit:", cfg.load_in_4bit)
+    # print("load_in_8bit:", cfg.load_in_8bit)
+    # print("quantization_config:", quantization_config)
+
     vla = AutoModelForVision2Seq.from_pretrained(
         cfg.pretrained_checkpoint,
-        # attn_implementation="flash_attention_2",
         torch_dtype=torch.bfloat16,
-        load_in_8bit=cfg.load_in_8bit,
-        load_in_4bit=cfg.load_in_4bit,
+        quantization_config=quantization_config,
+        device_map={"": "cuda:0"},
         low_cpu_mem_usage=True,
         trust_remote_code=True,
     )
+
+    # Load the model
+    # vla = AutoModelForVision2Seq.from_pretrained(
+    #     cfg.pretrained_checkpoint,
+    #     # attn_implementation="flash_attention_2",
+    #     torch_dtype=torch.bfloat16,
+    #     load_in_8bit=cfg.load_in_8bit,
+    #     load_in_4bit=cfg.load_in_4bit,
+    #     low_cpu_mem_usage=True,
+    #     trust_remote_code=True,
+    #     device_map="auto",
+    # )
 
     # If using FiLM, wrap the vision backbone to allow for infusion of language inputs
     if cfg.use_film:
@@ -299,7 +333,10 @@ def get_vla(cfg: Any) -> torch.nn.Module:
     vla.eval()
 
     # Move model to device if not using quantization
-    if not cfg.load_in_8bit and not cfg.load_in_4bit:
+    # if not cfg.load_in_8bit and not cfg.load_in_4bit:
+    #     vla = vla.to(DEVICE)
+
+    if not (cfg.load_in_4bit or cfg.load_in_8bit):
         vla = vla.to(DEVICE)
 
     # Load dataset stats for action normalization

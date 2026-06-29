@@ -155,3 +155,7 @@ wandb/
 # model weights
 openvla_7b_oft_finetuned/**
 !openvla_7b_oft_finetuned/modeling_prismatic.py
+
+# training data
+libero_data/**
+tso_data/**

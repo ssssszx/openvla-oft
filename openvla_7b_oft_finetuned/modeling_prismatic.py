@@ -918,7 +918,7 @@ class OpenVLAForActionPrediction(PrismaticForConditionalGeneration):
 
         # L1 regression prediction
         normalized_actions = action_head.predict_action(actions_hidden_states)
-        normalized_actions = normalized_actions.reshape(NUM_ACTIONS_CHUNK, ACTION_DIM)
+        normalized_actions = normalized_actions.reshape(-1, NUM_ACTIONS_CHUNK, ACTION_DIM)
         normalized_actions = normalized_actions.float()
 
         return normalized_actions, actions_hidden_states
@@ -1312,69 +1312,3 @@ class OpenVLAForActionPrediction(PrismaticForConditionalGeneration):
         # print("type check is removed at 2026-4-10-22:47")    
         # 
         return np.array([-1])   
-    
-    # def _regression_tch_embeddings,
-    #     attention_mask,
-    #     labels,
-    #     NUM_PATCHES,
-    #     NUM_PROMPT_TOKENS,
-    #     action_head=None,
-    # ):
-    #     """Run L1 regression-based continuous action prediction or discrete action tokens prediction."""
-    #     # Zero out action token embeddings
-    #     all_actions_mask = all_actions_mask.unsqueeze(-1)  # (B, seq_len, 1)
-    #     input_embeddings = input_embeddings * ~all_actions_mask
-
-    #     # Build multimodal embeddings and attention mask
-    #     multimodal_embeddings, multimodal_attention_mask = self._build_multimodal_attention(
-    #         input_embeddings, projected_patch_embeddings, attention_mask
-    #     )
-
-    #     # Forward pass through language model
-    #     language_model_output = self.language_model(
-    #         input_ids=None,
-    #         attention_mask=multimodal_attention_mask,
-    #         position_ids=None,
-    #         past_key_values=None,
-    #         inputs_embeds=multimodal_embeddings,
-    #         labels=None,
-    #         use_cache=None,
-    #         output_attentions=False,
-    #         output_hidden_states=True,
-    #         return_dict=True,
-    #     )
-
-    #     # Extract hidden states for action tokens
-    #     last_hidden_states = language_model_output.hidden_states[-1]  # (B, seq_len, D)
-    #     actions_hidden_states = last_hidden_states[
-    #         :,
-    #         NUM_PATCHES + NUM_PROMPT_TOKENS : NUM_PATCHES + NUM_PROMPT_TOKENS + ACTION_DIM * NUM_ACTIONS_CHUNK,
-    #         :,
-    #     ]  # (B, act_chunk_len, D)
-
-    #     # Handle different prediction methods
-    #     if action_head is not None:
-    #         # L1 regression prediction
-    #         normalized_actions = action_head.predict_action(actions_hidden_states)
-    #         normalized_actions = normalized_actions.reshape(NUM_ACTIONS_CHUNK, ACTION_DIM)
-    #     else:
-    #         # Discrete token-based prediction
-    #         predicted_action_token_ids = (
-    #             language_model_output.logits[
-    #                 :,
-    #                 NUM_PATCHES + NUM_PROMPT_TOKENS : NUM_PATCHES + NUM_PROMPT_TOKENS + ACTION_DIM * NUM_ACTIONS_CHUNK,
-    #             ]
-    #             .argmax(dim=2)
-    #             .cpu()
-    #             .numpy()
-    #         )
-    #         discretized_actions = self.vocab_size - predicted_action_token_ids
-    #         discretized_actions = np.clip(discretized_actions - 1, a_min=0, a_max=self.bin_centers.shape[0] - 1)
-    #         normalized_actions = self.bin_centers[discretized_actions]
-    #         normalized_actions = normalized_actions.reshape(NUM_ACTIONS_CHUNK, ACTION_DIM)
-
-    #     return normalized_actions, actions_hidden_statesor_discrete_prediction_train(
-    #     self,
-    #     input_embeddings,
-    #     all_actions_mask,
-    #     projected_pa
